@@ -1,0 +1,49 @@
+{
+  "name": "saerom-council",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.5",
+    "@mui/x-date-pickers": "^8.17.0",
+    "@supabase/supabase-js": "^2.79.0",
+    "dayjs": "^1.11.19",
+    "framer-motion": "^12.23.24",
+    "react": "^19.1.1",
+    "react-activation": "^0.13.4",
+    "react-calendar": "^6.0.0",
+    "react-color": "^2.19.3",
+    "react-dom": "^19.1.1",
+    "react-loading-indicators": "^1.0.1",
+    "react-router-dom": "^7.9.4",
+    "react-window": "^1.8.11",
+    "styled-components": "^6.1.19",
+    "styled-reset": "^5.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.22",
+    "globals": "^16.4.0",
+    "vite": "npm:rolldown-vite@7.1.14",
+    "vite-plugin-pwa": "^1.1.0"
+  },
+  "overrides": {
+    "vite": "npm:rolldown-vite@7.1.14"
+  },
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "main": "eslint.config.js",
+  "author": "",
+  "license": "ISC"
+}

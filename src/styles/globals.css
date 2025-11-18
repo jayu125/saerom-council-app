@@ -1,0 +1,133 @@
+* {
+  padding: 0;
+  margin: 0;
+  outline: none;
+  font-family: "Pretendard Variable", Pretendard, -apple-system,
+    BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  width: 100vw;
+  height: 100vh;
+  font-family: "Pretendard Variable", Pretendard, -apple-system,
+    BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.app {
+  width: 100%;
+  height: 100%;
+}
+
+.app > main {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.react-calendar {
+  background-color: var(--background-elevate) !important;
+  border: none !important;
+}
+
+.react-calendar__tile {
+  border-radius: 50%;
+  aspect-ratio: 1 / 1 !important;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.react-calendar__tile abbr {
+  font-family: "Pretendard Variable", Pretendard, -apple-system,
+    BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.react-calendar__month-view__days__day--weekend abbr {
+  color: #d10000 !important;
+}
+
+.react-calendar__month-view {
+  abbr {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--Text-main);
+  }
+}
+
+.react-calendar__month-view__days__day--neighboringMonth abbr {
+  color: #757575;
+}
+
+.react-calendar__tile:disabled {
+  background-color: var(--background-elevate) !important;
+}
+
+.react-calendar__tile:disabled abbr {
+  color: var(--Text-sub) !important;
+}
+
+.react-calendar__tile--now {
+  background-color: #3a1818 !important;
+}
+
+.react-calendar__navigation button {
+  color: var(--Text-main) !important;
+}
+
+.react-calendar__tile--active {
+  background-color: var(--background) !important;
+}
+
+.react-calendar__tile--active abbr {
+  font-family: "Pretendard Variable", Pretendard, -apple-system,
+    BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+  font-weight: 800 !important;
+}
+.react-calendar__navigation button:disabled {
+  background-color: var(--background-elevate) !important;
+  color: var(--Text-sub) !important;
+}
+
+.react-calendar__navigation button:enabled:hover {
+  background-color: var(--background-elevate) !important;
+}
+
+.react-calendar__navigation__label__labelText--from {
+  font-size: 20px;
+}
+
+abbr[title] {
+  text-decoration: none;
+}
+
+.react-calendar__year-view .react-calendar__tile abbr {
+  color: var(--Text-main);
+}
+
+.react-calendar__tile--now {
+  color: var(--Text-main);
+}
