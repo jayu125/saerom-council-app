@@ -1,5 +1,7 @@
 import styled from "styled-components";
 import { supabase } from "../supabaseClient";
+import { useNavigate } from "react-router-dom";
+import useProfile from "../utils/useProfile";
 
 const Wrapper = styled.div`
   width: 100%;
@@ -17,7 +19,8 @@ const Text = styled.div`
 `;
 
 const LogoutButton = styled.div`
-  width: 100%;
+  width: 80%;
+  max-width: 500px;
   height: 54px;
   border-radius: 15px;
   background-color: var(--point-red);
@@ -37,6 +40,7 @@ const LogoutButton = styled.div`
 `;
 
 export default function NoAccessPage() {
+  const navigate = useNavigate();
   const handleLogout = async () => {
     try {
       // Supabase 세션 제거
@@ -46,7 +50,7 @@ export default function NoAccessPage() {
         alert("로그아웃 중 오류가 발생했습니다.");
         return;
       }
-      const navigate = useNavigate();
+
       // 로그인 페이지로 이동
       navigate("/login", { replace: true });
     } catch (err) {
@@ -54,6 +58,19 @@ export default function NoAccessPage() {
       alert("로그아웃 처리 중 문제가 발생했습니다.");
     }
   };
+  const { profile, loading } = useProfile();
+
+  // 프로필이 없거나, 부서/직책이 없는 유저 → 접근 차단
+  const isProfileReady =
+    profile &&
+    profile.department &&
+    profile.role &&
+    profile.department.trim() !== "" &&
+    profile.role.trim() !== "";
+  if (isProfileReady) {
+    navigate("/", { replace: true });
+  }
+
   return (
     <Wrapper>
       <Text>조금만 기다려주세요</Text>
