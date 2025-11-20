@@ -12,6 +12,8 @@ import { OrbitProgress } from "react-loading-indicators";
 import { supabase } from "../supabaseClient";
 import { ymdToISO } from "../utils/dateRange";
 import { CirclePicker } from "react-color";
+import Attendees from "../components/attendee";
+import AttendeeSelector from "../components/attendeeSelector";
 
 const Wrapper = styled.div`
   width: 100%;
@@ -207,8 +209,47 @@ const PaletteModal = styled.div`
   right: 36px;
 `;
 
+const VisibilitySection = styled.div`
+  width: 100%;
+  margin-top: 24px;
+`;
+
+const VisibilityLabel = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--Text-sub);
+  margin-bottom: 8px;
+`;
+
+const VisibilityGroup = styled.div`
+  display: flex;
+  gap: 6px;
+`;
+
+const VisibilityOption = styled.div`
+  flex: 1;
+  height: 32px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid
+    ${({ $active }) => ($active ? "var(--Text-main)" : "var(--background-btn)")};
+  color: ${({ $active }) => ($active ? "var(--Text-main)" : "var(--Text-sub)")};
+  background-color: ${({ $active }) =>
+    $active ? "var(--background)" : "var(--background-lower)"};
+
+  &:active {
+    transform: var(--active-transform);
+    background-color: var(--background-elevate);
+  }
+`;
+
 export default function AddEventModalChild() {
-  const placeArr = ["학생회실", "강당", "운동장", "장소1", "장소2"];
+  const placeArr = ["학생회실", "강당", "운동장", "시청각실", "중앙홀"];
   const [place, setPlace] = useState(null);
   const [allowSave, setAllowSave] = useState(false);
   const [title, setTitle] = useState("");
@@ -220,6 +261,8 @@ export default function AddEventModalChild() {
   const { openModal, closeModal, modalContent } = useModal();
   const [isLoading, setIsLoading] = useState(false);
   const [modalWidth, setModalWidth] = useState(0);
+  const [visibility, setVisibility] = useState("public"); // 'private' | 'attendees' | 'public'
+  const [attendeeIds, setAttendeeIds] = useState([]); // 선택된 참석자 id 배열
 
   const colorModalRef = useRef(null);
   const selectionAreaRef = useRef(null);
@@ -264,11 +307,9 @@ export default function AddEventModalChild() {
     setIsLoading(true);
     setAllowSave(false);
     try {
-      // const date = modalContext[0].date; // {year, month, dayId}
       const date = modalContent.date; // {year, month, dayId}
       if (!date) throw new Error("날짜 정보가 없습니다.");
 
-      // 시간 결합 (Asia/Seoul 로컬 → ISO)
       const startsISO = ymdToISO(
         date.year,
         date.month,
@@ -280,25 +321,44 @@ export default function AddEventModalChild() {
       const { data: user } = await supabase.auth.getUser();
       if (!user?.user) throw new Error("로그인이 필요합니다.");
 
-      const { error } = await supabase.from("events").insert({
-        user_id: user.user.id,
-        title,
-        description: description,
-        location: place,
-        starts_at: startsISO,
-        ends_at: null,
-        all_day: false,
-        color: color,
-      });
+      // 1) 이벤트 본문 등록 + visibility 저장, id를 리턴받기
+      const { data: inserted, error } = await supabase
+        .from("events")
+        .insert({
+          user_id: user.user.id,
+          title,
+          description: description,
+          location: place,
+          starts_at: startsISO,
+          ends_at: null,
+          all_day: false,
+          color: color,
+          visibility, // 🔹 공개 범위 저장
+        })
+        .select("id") // 새로 생성된 id만 가져옴
+        .single();
+
       if (error) throw error;
+
+      // 2) 참석자 테이블에 bulk insert
+      if (attendeeIds.length > 0) {
+        const rows = attendeeIds.map((uid) => ({
+          event_id: inserted.id,
+          user_id: uid,
+        }));
+
+        const { error: attError } = await supabase
+          .from("event_attendees")
+          .insert(rows);
+
+        if (attError) throw attError;
+      }
     } catch (err) {
       console.log("onsaveclick 에서 에러 발생 :", err);
     } finally {
       setIsLoading(false);
       setAllowSave(true);
-      // modalContext[1](false);
       closeModal();
-      //캘린더 페이지 새로고침 필요 (업데이트)
     }
   };
 
@@ -461,6 +521,32 @@ export default function AddEventModalChild() {
           placeholder="설명"
         />
       </SelectionArea>
+      <VisibilitySection>
+        <VisibilityLabel>공개 범위</VisibilityLabel>
+        <VisibilityGroup>
+          <VisibilityOption
+            $active={visibility === "private"}
+            onClick={() => setVisibility("private")}
+          >
+            나만 보기
+          </VisibilityOption>
+          <VisibilityOption
+            $active={visibility === "attendees"}
+            onClick={() => setVisibility("attendees")}
+          >
+            참석자 포함
+          </VisibilityOption>
+          <VisibilityOption
+            $active={visibility === "public"}
+            onClick={() => setVisibility("public")}
+          >
+            모두에게 공개
+          </VisibilityOption>
+        </VisibilityGroup>
+      </VisibilitySection>
+
+      {/* 🔽 참석자 선택 */}
+      <AttendeeSelector selectedIds={attendeeIds} onChange={setAttendeeIds} />
       <EmptyArea></EmptyArea>
 
       <BtnArea>

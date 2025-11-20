@@ -131,3 +131,8 @@ abbr[title] {
 .react-calendar__tile--now {
   color: var(--Text-main);
 }
+
+.MuiStack-root {
+  justify-content: center !important;
+  align-items: center;
+}

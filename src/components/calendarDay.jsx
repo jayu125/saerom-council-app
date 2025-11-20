@@ -56,9 +56,10 @@ const Text = styled.p`
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-
   position: absolute;
 
+  color: ${({ idx }) =>
+    idx === 0 ? "var(--point-red)" : idx === 6 ? "var(--point-blue)" : null};
   &[class~="is-today"] {
     background-color: red;
     color: white;
@@ -92,7 +93,14 @@ const Text = styled.p`
   `}
 `;
 
-export default function Day({ dayN, className, events = [], device, ...rest }) {
+export default function Day({
+  dayN,
+  className,
+  events = [],
+  device,
+  idx,
+  ...rest
+}) {
   // const modalContext = useModal();
   const { openModal, closeModal } = useModal();
 
@@ -128,12 +136,10 @@ export default function Day({ dayN, className, events = [], device, ...rest }) {
         <Text className="labeled">{dayN.label}</Text>
       </Wrapper>
     );
-
   return (
     <Wrapper
       onClick={() => {
         console.log("click to open");
-        // modalContext[1]({ isopen: true, ...viewEventModal });
         openModal(viewEventModal, {
           width: device == "phone" ? "350px" : "400px",
           height: 500,
@@ -146,7 +152,9 @@ export default function Day({ dayN, className, events = [], device, ...rest }) {
       {...longPress}
       {...rest}
     >
-      <Text className={className}>{dayN.dayId}</Text>
+      <Text className={className} idx={idx}>
+        {dayN.dayId}
+      </Text>
       {/* 간단한 점/배지 */}
       <div
         style={{

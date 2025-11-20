@@ -21,8 +21,8 @@ export const GlobalStyle = createGlobalStyle`
         --background-btn: #2b2b2b;
         --background: #1b1b1b;
         --background-lower: #303030;
-        --point-red: #FF6E6E;
-        --point-blue: #6E76FF;
+        --point-red: #d64650ff;
+        --point-blue: #666de9ff;
 
         --active-transform: scale(0.95);
     }

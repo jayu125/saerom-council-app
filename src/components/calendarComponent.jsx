@@ -34,10 +34,10 @@ const IndiChild = styled.div`
   font-size: 10px;
   font-weight: 500;
   display: flex;
-  justify-content: ${({ device }) => (device == "phone" ? "flex" : "right")};
+  justify-content: ${({ device }) => (device == "phone" ? "center" : "right")};
   align-items: center;
   background-color: var(--background-elevate);
-  padding: 8px 0px;
+  padding: 8px 6px 8px 0px;
 `;
 
 const Scrollable = styled.div`
@@ -217,6 +217,7 @@ const CalendarRow = ({ index, style, data }) => {
             key={`${index}-${col}`}
             device={width < theme.bp.md ? "phone" : "tablet"}
             dayN={cell}
+            idx={col}
             className={isToday ? "is-today" : undefined}
             data-today={isToday ? "true" : undefined}
             events={eventsForCell}
@@ -252,11 +253,16 @@ export default function Calendar() {
   const days = ["S", "M", "T", "W", "T", "F", "S"];
 
   function handleResize() {
-    const offsetHeight = WrapperRef.current.offsetHeight;
-    const offsetWidth = WrapperRef.current.offsetWidth;
+    if (!WrapperRef.current) return;
+
+    const wrapperRect = WrapperRef.current.getBoundingClientRect();
+    const indiHeight = IndiRef.current
+      ? IndiRef.current.getBoundingClientRect().height
+      : 0;
+
     setScrollAreaObj({
-      w: offsetWidth,
-      h: offsetHeight - (IndiRef.current?.offsetHeight ?? 0),
+      w: wrapperRect.width,
+      h: wrapperRect.height - indiHeight,
     });
   }
 
@@ -265,12 +271,34 @@ export default function Calendar() {
     publishCalendarYM(TODAY.y, TODAY.m);
   }, []); // eslint-disable-line
 
-  // 사이즈 측정
   useEffect(() => {
     if (!WrapperRef.current) return;
-    handleResize();
+
+    let frameId = null;
+
+    const measureUntilReady = () => {
+      if (!WrapperRef.current) return;
+
+      const rect = WrapperRef.current.getBoundingClientRect();
+
+      // 아직 레이아웃이 안 잡혀서 높이가 0이면 -> 다음 프레임에 다시 측정
+      if (rect.height === 0) {
+        frameId = requestAnimationFrame(measureUntilReady);
+        return;
+      }
+
+      // 높이가 생겼다면 이제 제대로 계산
+      handleResize();
+    };
+
+    measureUntilReady();
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (frameId !== null) cancelAnimationFrame(frameId);
+    };
   }, []); // eslint-disable-line
 
   useEffect(() => {
@@ -377,7 +405,14 @@ export default function Calendar() {
           <IndiChild
             device={scrollAreaObj.w < theme.bp.md ? "phone" : "tablet"}
             key={index}
-            color={el === "S" ? "var(--Text-sub)" : "var(--Text-main)"}
+            color={
+              // index === 0
+              // ? "var(--point-blue)"
+              // : index === 6
+              // ? "var(--point-red)"
+              // : "var(--Text-sub)"
+              "var(--Text-sub)"
+            }
           >
             {el}
           </IndiChild>

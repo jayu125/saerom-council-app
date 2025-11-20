@@ -1,3 +1,4 @@
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import styled from "styled-components";
 
 const Wrapper = styled.div`
@@ -6,5 +7,13 @@ const Wrapper = styled.div`
 `;
 
 export default function DepartmentPage() {
-  return <Wrapper></Wrapper>;
+  return (
+    <Wrapper>
+      <DotLottieReact
+        src="https://lottie.host/8b6e9b97-7e11-469a-9a4f-4c2a3757361f/HI9cMJMDTT.lottie"
+        loop
+        autoplay
+      />
+    </Wrapper>
+  );
 }

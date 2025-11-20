@@ -49,7 +49,7 @@ const Title = styled.div`
 const Body = styled.div`
   width: 100%;
   height: calc(100% - 60px);
-  padding: 20px 30px 0px 30px;
+  padding: 20px 30px 6px 30px;
   box-sizing: border-box;
   position: relative;
 `;
@@ -176,12 +176,18 @@ export default function Modal({ width, height }) {
         initial={{ y: height / 2 + 200, x: "-50%", opacity: 0 }}
         animate={
           isMobile && expendModalOpen
-            ? { x: "-50%", y: "-80%", opacity: 1 }
+            ? {
+                x: "-50%",
+                height: height / 2,
+                y: -height / 2 - 120,
+                opacity: 1,
+              }
             : isMobile
             ? {
                 x: "-50%",
-                y: "-50%",
+                y: -height / 2,
                 opacity: 1,
+                height: height,
               }
             : {
                 y: "-50%",
@@ -189,7 +195,12 @@ export default function Modal({ width, height }) {
                 opacity: 1,
               }
         }
-        exit={{ y: height / 2 + 200, x: "-50%", opacity: 0 }}
+        exit={{
+          y: height / 2 + 200,
+          height: height,
+          x: "-50%",
+          opacity: 0,
+        }}
         transition={{ ease: [0.22, 0.78, 0.2, 0.99], duration: 0.25 }}
         height={height}
         width={width}
@@ -233,14 +244,14 @@ export default function Modal({ width, height }) {
           style={isMobile ? { zIndex: 1000 } : null}
           initial={
             isMobile
-              ? { x: "-50%", y: "-50%", opacity: 0 }
+              ? { x: "-50%", y: "-28%", opacity: 0 }
               : { y: "-50%", opacity: 0 }
           }
           animate={
             isMobile
               ? {
                   x: "-50%",
-                  y: 0,
+                  y: -110,
                   opacity: 1,
                 }
               : {

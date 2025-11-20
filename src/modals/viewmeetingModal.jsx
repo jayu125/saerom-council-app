@@ -11,6 +11,10 @@ import { LocalizationProvider, MobileTimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer, DemoItem } from "@mui/x-date-pickers/internals/demo";
 
+// 🔹 참석자 선택/표시용
+import AttendeeSelector from "../components/attendeeSelector";
+import { useAllProfiles } from "../utils/useAllProfiles";
+
 const timePickerSlotProps = {
   textField: {
     sx: {
@@ -23,7 +27,7 @@ const timePickerSlotProps = {
         borderWidth: "1px",
       },
       "& .MuiIconButton-root": {
-        color: "var(--Text-sub);", // 기본 아이콘 색상
+        color: "var(--Text-sub);",
         padding: "6px",
         transition: "0.2s",
         "&:hover": {
@@ -36,21 +40,19 @@ const timePickerSlotProps = {
       },
     },
     "& .MuiInputLabel-root": {
-      color: "var(--Text-sub) !important", // 기본 label 색
+      color: "var(--Text-sub) !important",
       fontFamily: "pretendard variable",
     },
     "& .MuiInputLabel-root.Mui-focused": {
-      color: "var(--Text-main) !important", // 클릭/포커스 시 label 색
+      color: "var(--Text-main) !important",
     },
   },
   mobilePaper: {
     color: "var(--Text-main)",
     sx: {
-      // 전체 다이얼로그 배경
       backgroundColor: "var(--background-elevate)",
       color: "var(--Text-main)",
 
-      // 툴바의 큰 시간 글자
       "& .MuiPickersToolbar-content span": {
         color: "var(--Text-sub)",
       },
@@ -58,14 +60,12 @@ const timePickerSlotProps = {
         color: "var(--Text-main)",
       },
 
-      // 시계 숫자
       "& .MuiClockNumber-root": {
         color: "var(--Text-main)",
         fontWeight: 200,
         fontFamily: "pretendard variable",
       },
 
-      // 시계 침
       "& .MuiClock-pin, & .MuiClockPointer-root": {
         backgroundColor: "var(--Text-main)",
       },
@@ -74,12 +74,6 @@ const timePickerSlotProps = {
         background: "var(--Text-main)",
       },
 
-      // 선택된 숫자
-      "& .MuiClockNumber-root.Mui-selected": {
-        color: "var(--background-elevate)",
-      },
-
-      // 시계 배경
       "& .MuiClock-root": {
         backgroundColor: "var(--background-elevate)",
       },
@@ -87,7 +81,6 @@ const timePickerSlotProps = {
         backgroundColor: "var(--background-lower)",
       },
 
-      // 확인/취소 버튼
       "& .MuiDialogActions-root button": {
         color: "var(--Text-main)",
       },
@@ -104,6 +97,7 @@ const Wrapper = styled.div`
   position: relative;
   border-top: 1px dashed var(--Text-sub);
   user-select: none;
+  padding-bottom: 88px;
 `;
 
 const Scrollable = styled.div`
@@ -118,7 +112,6 @@ const Scrollable = styled.div`
 
 const Section = styled.div`
   margin-top: 16px;
-  padding: 0 30px;
 `;
 
 const Label = styled.div`
@@ -224,6 +217,10 @@ const CancelButton = styled.div`
   }
 `;
 
+const EmptyArea = styled.div`
+  height: 50px;
+`;
+
 const CheckButton = styled.div`
   width: 100px;
   height: 42px;
@@ -272,6 +269,18 @@ export default function ViewMeetingModal({ meetingId }) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // 🔹 참석자 ID 목록
+  const [attendeeIds, setAttendeeIds] = useState([]);
+
+  // 🔹 전체 프로필 (이름/부서 표시용)
+  const { profiles } = useAllProfiles();
+
+  const attendeeProfiles = useMemo(() => {
+    if (!profiles || attendeeIds.length === 0) return [];
+    const map = new Map(profiles.map((p) => [p.id, p]));
+    return attendeeIds.map((id) => map.get(id)).filter(Boolean);
+  }, [profiles, attendeeIds]);
+
   const pad = (n) => String(n).padStart(2, "0");
 
   const timeText = useMemo(() => {
@@ -288,7 +297,7 @@ export default function ViewMeetingModal({ meetingId }) {
     return e ? `${date} · ${s} ~ ${e}` : `${date} · ${s}`;
   }, [meeting]);
 
-  // 회의 정보 + 권한 확인
+  // 회의 정보 + 권한 + 참석자 로딩
   useEffect(() => {
     if (!meetingId) return;
     let cancelled = false;
@@ -297,17 +306,23 @@ export default function ViewMeetingModal({ meetingId }) {
       try {
         setLoading(true);
 
-        const [{ data: userData, error: userError }, { data, error }] =
-          await Promise.all([
-            supabase.auth.getUser(),
-            supabase.from("meetings").select("*").eq("id", meetingId).single(),
-          ]);
+        const [
+          { data: userData, error: userError },
+          { data, error },
+          { data: ma, error: maErr },
+        ] = await Promise.all([
+          supabase.auth.getUser(),
+          supabase.from("meetings").select("*").eq("id", meetingId).single(),
+          supabase
+            .from("meeting_attendees")
+            .select("user_id")
+            .eq("meeting_id", meetingId),
+        ]);
 
         if (error) {
           console.log("ViewMeetingModal: 회의 조회 에러:", error);
           return;
         }
-
         if (cancelled) return;
 
         setMeeting(data);
@@ -321,6 +336,12 @@ export default function ViewMeetingModal({ meetingId }) {
 
         const userId = userData?.user?.id;
         setCanEditOrDelete(Boolean(userId && data.created_by === userId));
+
+        // 참석자 ID 세팅
+        if (!maErr && ma) {
+          const ids = ma.map((r) => r.user_id);
+          setAttendeeIds(ids);
+        }
       } catch (err) {
         console.log("ViewMeetingModal 초기 로딩 에러:", err);
       } finally {
@@ -334,7 +355,7 @@ export default function ViewMeetingModal({ meetingId }) {
   }, [meetingId]);
 
   const handleSave = async () => {
-    if (!canEditOrDelete || !meetingId) return;
+    if (!canEditOrDelete || !meetingId || !meeting) return;
     if (!title.trim()) {
       alert("회의 제목을 입력해주세요.");
       return;
@@ -358,8 +379,8 @@ export default function ViewMeetingModal({ meetingId }) {
       }
       const user = userData.user;
 
-      // 날짜 부분은 기존 starts_at 기준으로 유지하고, 시/분만 교체
-      const baseDate = meeting.starts_at ? dayjs(meeting.starts_at) : dayjs(); // fallback
+      // 날짜는 기존 날짜 유지, 시/분만 교체
+      const baseDate = meeting.starts_at ? dayjs(meeting.starts_at) : dayjs();
 
       const newStart = baseDate
         .hour(startTime.hour())
@@ -373,6 +394,7 @@ export default function ViewMeetingModal({ meetingId }) {
         .second(0)
         .millisecond(0);
 
+      // 1) meetings 업데이트
       const { error } = await supabase
         .from("meetings")
         .update({
@@ -395,6 +417,46 @@ export default function ViewMeetingModal({ meetingId }) {
           alert("회의 정보를 수정하는 중 오류가 발생했습니다.");
         }
         return;
+      }
+
+      // 2) 참석자 업데이트
+      try {
+        // 기존 참석자 삭제
+        const { error: delErr } = await supabase
+          .from("meeting_attendees")
+          .delete()
+          .eq("meeting_id", meetingId);
+
+        if (delErr) {
+          console.error(
+            "[ViewMeetingModal] meeting_attendees delete error:",
+            delErr
+          );
+        }
+
+        // 생성자는 반드시 참석자 목록에 포함되도록 보정
+        const baseIds = new Set(attendeeIds);
+        baseIds.add(meeting.created_by);
+        const finalIds = Array.from(baseIds);
+
+        if (finalIds.length > 0) {
+          const rows = finalIds.map((uid) => ({
+            meeting_id: meetingId,
+            user_id: uid,
+          }));
+          const { error: insErr } = await supabase
+            .from("meeting_attendees")
+            .insert(rows);
+
+          if (insErr) {
+            console.error(
+              "[ViewMeetingModal] meeting_attendees insert error:",
+              insErr
+            );
+          }
+        }
+      } catch (eaErr) {
+        console.error("[ViewMeetingModal] 참석자 업데이트 중 에러:", eaErr);
       }
 
       // 로컬 state도 업데이트
@@ -513,7 +575,6 @@ export default function ViewMeetingModal({ meetingId }) {
       <Scrollable>
         {/* 제목 */}
         <Section>
-          <Label>회의 제목</Label>
           {editMode ? (
             <TitleInput
               value={title}
@@ -527,9 +588,9 @@ export default function ViewMeetingModal({ meetingId }) {
 
         {/* 시간 */}
         <Section>
-          <Label>시간</Label>
           {editMode ? (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Label>시작 시간</Label>
               <DemoContainer
                 components={["MobileTimePicker", "MobileTimePicker"]}
               >
@@ -537,14 +598,19 @@ export default function ViewMeetingModal({ meetingId }) {
                   <MobileTimePicker
                     value={startTime}
                     onChange={(v) => v && setStartTime(v)}
-                    slotProps={timePickerSlotProps} // ✅ 추가
+                    slotProps={timePickerSlotProps}
                   />
                 </DemoItem>
+              </DemoContainer>
+              <Label>종료 시간</Label>
+              <DemoContainer
+                components={["MobileTimePicker", "MobileTimePicker"]}
+              >
                 <DemoItem>
                   <MobileTimePicker
                     value={endTime}
                     onChange={(v) => v && setEndTime(v)}
-                    slotProps={timePickerSlotProps} // ✅ 추가
+                    slotProps={timePickerSlotProps}
                   />
                 </DemoItem>
               </DemoContainer>
@@ -556,7 +622,6 @@ export default function ViewMeetingModal({ meetingId }) {
 
         {/* 설명 */}
         <Section>
-          <Label>설명</Label>
           {editMode ? (
             <InputField
               style={{ marginTop: 4 }}
@@ -573,6 +638,29 @@ export default function ViewMeetingModal({ meetingId }) {
             </DescriptionText>
           )}
         </Section>
+
+        {/* 참석자 */}
+        <Section>
+          {editMode ? (
+            <AttendeeSelector
+              selectedIds={attendeeIds}
+              onChange={setAttendeeIds}
+            />
+          ) : attendeeProfiles.length === 0 ? (
+            <DescriptionText style={{ color: "var(--Text-sub)" }}>
+              참석자 없음
+            </DescriptionText>
+          ) : (
+            <DescriptionText>
+              {attendeeProfiles
+                .map((p) =>
+                  p.department ? `${p.name} (${p.department})` : p.name
+                )
+                .join(", ")}
+            </DescriptionText>
+          )}
+        </Section>
+        <EmptyArea></EmptyArea>
 
         {!canEditOrDelete && (
           <Section>

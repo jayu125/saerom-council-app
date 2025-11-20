@@ -11,6 +11,8 @@ import dayjs from "dayjs";
 import { LocalizationProvider, MobileTimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer, DemoItem } from "@mui/x-date-pickers/internals/demo";
+import AttendeeSelector from "../components/attendeeSelector";
+import { OrbitProgress } from "react-loading-indicators";
 
 // 파일 상단 어딘가 (import들 아래 정도)
 const timePickerSlotProps = {
@@ -200,6 +202,8 @@ export default function AddMeetingModal() {
   const [allowBtn, setAllowBtn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [attendeeIds, setAttendeeIds] = useState([]);
+
   const { closeModal } = useModal();
 
   // 날짜+TimePicker 조합해서 Dayjs 시작/끝 시간 만들기
@@ -258,20 +262,16 @@ export default function AddMeetingModal() {
     if (!allowBtn) return;
     if (!date || !startTime || !endTime) return;
 
-    const { startsAt, endsAt } = buildMeetingTimeRange(
-      date,
-      startTime,
-      endTime
-    );
-
-    if (!endsAt.isAfter(startsAt)) {
-      alert("종료 시간이 시작 시간보다 늦어야 합니다.");
-      return;
-    }
-
     try {
       setIsLoading(true);
 
+      const { startsAt, endsAt } = buildMeetingTimeRange(
+        date,
+        startTime,
+        endTime
+      );
+
+      // 1) 현재 로그인 유저
       const { data: userData, error: userError } =
         await supabase.auth.getUser();
       if (userError || !userData?.user) {
@@ -279,14 +279,19 @@ export default function AddMeetingModal() {
       }
       const user = userData.user;
 
-      const { error } = await supabase.from("meetings").insert({
-        room_id: "ROOM-1",
-        title: title.trim(),
-        description: description.trim(),
-        starts_at: startsAt.toDate().toISOString(),
-        ends_at: endsAt.toDate().toISOString(),
-        created_by: user.id,
-      });
+      // 2) meetings에 예약 시도 + id 리턴
+      const { data: inserted, error } = await supabase
+        .from("meetings")
+        .insert({
+          room_id: "ROOM-1",
+          title,
+          description,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt.toISOString(),
+          created_by: user.id,
+        })
+        .select("id")
+        .single();
 
       if (error) {
         if (
@@ -301,7 +306,39 @@ export default function AddMeetingModal() {
         return;
       }
 
-      alert("회의 예약이 완료되었습니다.");
+      // 3) 참석자 저장
+      const rows = attendeeIds.map((uid) => ({
+        meeting_id: inserted.id,
+        user_id: uid,
+      }));
+
+      if (rows.length > 0) {
+        const { error: attErr } = await supabase
+          .from("meeting_attendees")
+          .insert(rows);
+        if (attErr) throw attErr;
+      }
+
+      // ⭐ 4) 방금 생성한 회의 전체 row(참석자 포함) 다시 가져오기
+      const { data: fullMeeting, error: fetchErr } = await supabase
+        .from("meetings")
+        .select("*, meeting_attendees ( user_id )")
+        .eq("id", inserted.id)
+        .maybeSingle();
+
+      if (fetchErr) {
+        console.error("[AddMeetingModal] fullMeeting fetch error:", fetchErr);
+      }
+
+      // ⭐ 5) 전역 커스텀 이벤트로 회의 생성 알림 보내기
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("meeting:created", {
+            detail: fullMeeting ?? inserted,
+          })
+        );
+      }
+
       closeModal();
     } catch (err) {
       console.log("addMeetingModal.jsx 의 onSaveBtnClick 에서 에러 :", err);
@@ -366,6 +403,10 @@ export default function AddMeetingModal() {
                     slotProps={timePickerSlotProps} // ✅ 스타일 적용
                   />
                 </DemoItem>
+              </DemoContainer>
+              <DemoContainer
+                components={["MobileTimePicker", "MobileTimePicker"]}
+              >
                 <DemoItem label="종료 시간">
                   <MobileTimePicker
                     value={endTime}
@@ -389,30 +430,45 @@ export default function AddMeetingModal() {
         </Wrapper>
       ) : currentStep === 2 ? (
         <Wrapper>
-          <SectionTitle>회의 정보</SectionTitle>
-          <div style={{ padding: "0 30px" }}>
-            <TitleInput
-              style={{ marginTop: 12 }}
-              value={title}
-              onChange={onTitleChange}
-              placeholder="회의 제목"
-            />
-            <InputField
-              style={{ marginTop: 24 }}
-              screenwidth={380}
-              onChange={onDescChange}
-              value={description}
-              placeholder="설명"
-            />
-            <SummaryText>{summary}</SummaryText>
-          </div>
+          <TitleInput
+            style={{ marginTop: 36 }}
+            value={title}
+            onChange={onTitleChange}
+            placeholder="회의 제목"
+          />
+          <InputField
+            style={{ marginTop: 36 }}
+            screenwidth={380}
+            onChange={onDescChange}
+            value={description}
+            placeholder="설명"
+          />
+
+          {/* 참석자 선택 */}
+          <AttendeeSelector
+            selectedIds={attendeeIds}
+            onChange={setAttendeeIds}
+          />
+
           <ButtonWrap>
             <PrevButton onClick={onPrevBtnClick}>이전</PrevButton>
             <NextButton
               onClick={onSaveBtnClick}
               isallowed={allowBtn ? "true" : "false"}
             >
-              {isLoading ? <LoadingArea>저장중...</LoadingArea> : "예약"}
+              {isLoading ? (
+                <LoadingArea>
+                  <OrbitProgress
+                    dense
+                    color="#ffffff"
+                    size="small"
+                    text=""
+                    textColor=""
+                  />
+                </LoadingArea>
+              ) : (
+                "예약"
+              )}
             </NextButton>
           </ButtonWrap>
         </Wrapper>
