@@ -500,6 +500,10 @@ export default function ViewMeetingModal({ meetingId }) {
 
       if (error) throw error;
 
+      window.dispatchEvent(
+        new CustomEvent("meeting:deleted", { detail: { id: meetingId } })
+      );
+
       closeModal();
     } catch (err) {
       console.log("ViewMeetingModal: 삭제 중 에러:", err);

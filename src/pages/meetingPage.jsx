@@ -226,6 +226,18 @@ function useMeetings() {
     return () => window.removeEventListener("meeting:created", handler);
   }, [rangeStart]);
 
+  useEffect(() => {
+    const handler = (e) => {
+      const { id } = e.detail || {};
+      if (!id) return;
+
+      setMeetings((prev) => prev.filter((m) => m.id !== id));
+    };
+
+    window.addEventListener("meeting:deleted", handler);
+    return () => window.removeEventListener("meeting:deleted", handler);
+  }, []);
+
   return { meetings, loading };
 }
 
