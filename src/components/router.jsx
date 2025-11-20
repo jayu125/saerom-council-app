@@ -15,7 +15,7 @@ import CalendarPage from "../pages/CalendarPage";
 import DepartmentPage from "../pages/DepartmentPage";
 import MeetingPage from "../pages/meetingPage";
 import RequireProfileCompleted from "./requireProfileCompleted";
-import MyPage from "../pages/myPage";
+import MyPage from "../pages/MyPage";
 import NoAccessPage from "../pages/noAccessPage";
 
 export const routes = [
