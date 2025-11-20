@@ -117,6 +117,7 @@ export default function MyPage() {
       <Wrapper>
         <Value>프로필을 불러오는 중 문제가 생겼습니다.</Value>
         <SubText>{error.message}</SubText>
+        <LogoutButton onClick={handleLogout}>로그아웃</LogoutButton>
       </Wrapper>
     );
   }

@@ -2,9 +2,17 @@ import styled from "styled-components";
 import { supabase } from "../supabaseClient";
 
 const Button = styled.button`
+  all: unset;
   width: 80%;
-  height: 80px;
-  border-radius: 20px;
+  max-width: 300px;
+  height: 60px;
+  border-radius: 10px;
+
+  border: 2px solid black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
 `;
 
 export default function GoogleLoginButton() {

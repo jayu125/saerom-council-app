@@ -13,14 +13,18 @@ import LoginPage from "../pages/loginPage";
 // const MyPage = lazy(() => import("../pages/myPage"));
 import CalendarPage from "../pages/CalendarPage";
 import DepartmentPage from "../pages/DepartmentPage";
-import MyPage from "../pages/MyPage";
 import MeetingPage from "../pages/meetingPage";
+import RequireProfileCompleted from "./requireProfileCompleted";
+import MyPage from "../pages/myPage";
+import NoAccessPage from "../pages/noAccessPage";
 
 export const routes = [
   {
     element: (
       <ProtectedRoute>
-        <MobileShell />
+        <RequireProfileCompleted>
+          <MobileShell />
+        </RequireProfileCompleted>
       </ProtectedRoute>
     ), // 하단 탭 들어있는 공통 레이아웃
     errorElement: <NotFoundPage />,
@@ -74,6 +78,7 @@ export const routes = [
   },
   { path: "*", element: <NotFoundPage /> },
   { path: "login", element: <LoginPage /> },
+  { path: "no-access", element: <NoAccessPage /> },
   { path: "test", element: <TestPage /> },
 ];
 
