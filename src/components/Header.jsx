@@ -257,7 +257,7 @@ export default function Header() {
         ) : pageContext[0] === "회의" ? (
           <Text>회의</Text>
         ) : (
-          <Text>My</Text>
+          <Text>MY</Text>
         )}
       </ContentBox>
     </Wrapper>
