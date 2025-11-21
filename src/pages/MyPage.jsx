@@ -3,6 +3,8 @@ import styled from "styled-components";
 import useProfile from "../utils/useProfile";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { setupPushToken } from "../utils/setupPush";
+import { notifyTodayMeetings } from "../utils/notifyTodayMeetings";
 
 const Wrapper = styled.div`
   width: 100%;
@@ -157,6 +159,8 @@ export default function MyPage() {
 
       {/* 앞으로 추가할 기능들 (나의 회의, 나의 일정, 알림 설정 등) */}
       {/* <Section>...</Section> */}
+      {/* <button onClick={setupPushToken}>알림 설정</button>
+      <button onClick={notifyTodayMeetings}>오늘 회의 알림 테스트</button> */}
     </Wrapper>
   );
 }

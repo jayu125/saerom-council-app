@@ -251,6 +251,9 @@ export default function BottomNav() {
           onClick={() => {
             pageContext[1](t.label);
           }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+          }}
           key={t.to}
           to={t.to}
           end={t.exact}
